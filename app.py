@@ -538,3 +538,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+  def main():
+    import streamlit as st
+    st.write("🚨 THE APP IS ALIVE!")
+    # ... the rest of your code ...
