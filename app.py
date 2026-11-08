@@ -7,13 +7,12 @@ Governing Legal Framework:
   - Petroleum Revenue Management Act, 2011 (Act 815 & Act 893)
   - Ghana Model Petroleum Agreements (Jubilee, TEN, Sankofa-Gye Nyame)
 
-Usage:
-  1. Streamlit Interactive Web App (Recommended):
-     streamlit run app.py
-  2. Direct Python CLI execution (zero external dependencies):
-     python app.py
-  3. Automated Mathematical Unit Verification:
-     python app.py --test
+Petroleum Engineering Themes:
+  - Deep Carbon Maritime Canvas (#060A12)
+  - Raw Light Sweet Crude Gold (#F59E0B)
+  - Subsea Flowline Cyan (#06B6D4)
+  - Sovereign Fiscal Jade (#10B981)
+  - Rig Safety Orange (#F97316)
 """
 
 import sys
@@ -308,7 +307,7 @@ def calculate_price_sensitivity(
 
 
 # ---------------------------------------------------------------------------
-# 3. Streamlit Interactive Application
+# 3. Streamlit Interactive Application with Petroleum Engineering Styling
 # ---------------------------------------------------------------------------
 
 def render_streamlit_app():
@@ -321,22 +320,61 @@ def render_streamlit_app():
         initial_sidebar_state="expanded",
     )
 
+    # Petroleum Engineering Industry Styling
+    st.markdown("""
+        <style>
+            .stApp {
+                background-color: #060a12;
+                color: #cbd5e1;
+            }
+            [data-testid="stSidebar"] {
+                background-color: #0a101d;
+                border-right: 1px solid #1a2742;
+            }
+            [data-testid="stMetric"] {
+                background: #0d1526;
+                padding: 16px;
+                border-radius: 10px;
+                border: 1px solid #1a2742;
+                border-top: 3px solid #f59e0b;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+            [data-testid="stMetricLabel"] {
+                color: #94a3b8 !important;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+                text-transform: uppercase !important;
+            }
+            [data-testid="stMetricValue"] {
+                color: #f8fafc !important;
+                font-family: monospace !important;
+                font-size: 24px !important;
+                font-weight: 700 !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     # Top Header
     st.markdown("""
-        <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #334155;">
+        <div style="background: linear-gradient(90deg, #0a101d 0%, #111e33 100%); padding: 20px 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #1a2742; border-top: 3px solid #f59e0b;">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: #f59e0b; color: #020617; font-weight: 900; font-size: 13px; padding: 4px 8px; border-radius: 4px;">GNPC</span>
-                <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; padding: 0;">GNPC Upstream Fiscal Reconciliation Suite</h1>
-                <span style="background: #064e3b; color: #34d399; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid #059669;">Act 919 & Model PA</span>
+                <span style="background: #f59e0b; color: #060a12; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em;">GNPC UPSTREAM</span>
+                <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0; padding: 0;">GNPC Upstream Fiscal Reconciliation Suite</h1>
+                <span style="background: #064e3b; color: #34d399; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid #059669;">Act 919 & Model PA</span>
             </div>
             <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
-                Auditable Monthly Crude Oil Entitlement, Cost Recovery Ceiling & PRMA (Act 815) Revenue Allocation Engine
+                Petroleum Engineering Fiscal Suite · Monthly Offshore Crude Liftings, Royalty Deductions, 70% Cost Recovery Ceiling & PRMA (Act 815) Sovereign Revenue Split
             </p>
         </div>
     """, unsafe_allow_html=True)
 
     # Sidebar: Concession Presets and Input Controls
-    st.sidebar.header("Concession & Lifting Setup")
+    st.sidebar.markdown("""
+        <div style="padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid #1a2742;">
+            <span style="color: #f59e0b; font-weight: 800; font-size: 14px;">🛢️ CONCESSION & FIELD SETUP</span>
+        </div>
+    """, unsafe_allow_html=True)
+
     selected_key = st.sidebar.selectbox(
         "Offshore Concession Preset",
         options=["jubilee", "ten", "sankofa", "custom"],
