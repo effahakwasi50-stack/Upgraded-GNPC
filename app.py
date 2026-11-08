@@ -7,12 +7,14 @@ Governing Legal Framework:
   - Petroleum Revenue Management Act, 2011 (Act 815 & Act 893)
   - Ghana Model Petroleum Agreements (Jubilee, TEN, Sankofa-Gye Nyame)
 
-Petroleum Engineering Themes:
-  - Deep Carbon Maritime Canvas (#060A12)
-  - Raw Light Sweet Crude Gold (#F59E0B)
-  - Subsea Flowline Cyan (#06B6D4)
-  - Sovereign Fiscal Jade (#10B981)
-  - Rig Safety Orange (#F97316)
+Usage:
+  1. Streamlit Web App (Recommended):
+     streamlit run app.py
+  2. Direct Python Execution:
+     python app.py
+     (Automatically launches Streamlit if installed, or runs the CLI audit report)
+  3. Automated Mathematical Unit Tests:
+     python app.py --test
 """
 
 import sys
@@ -307,7 +309,7 @@ def calculate_price_sensitivity(
 
 
 # ---------------------------------------------------------------------------
-# 3. Streamlit Interactive Application with Petroleum Engineering Styling
+# 3. Streamlit Interactive Application
 # ---------------------------------------------------------------------------
 
 def render_streamlit_app():
@@ -320,9 +322,10 @@ def render_streamlit_app():
         initial_sidebar_state="expanded",
     )
 
-    # Petroleum Engineering Industry Styling
+    # Petroleum Engineering Industry CSS Theme
     st.markdown("""
         <style>
+            /* Base Petroleum Dark Canvas */
             .stApp {
                 background-color: #060a12;
                 color: #cbd5e1;
@@ -331,12 +334,12 @@ def render_streamlit_app():
                 background-color: #0a101d;
                 border-right: 1px solid #1a2742;
             }
+            /* Petroleum Metric Cards Styling */
             [data-testid="stMetric"] {
                 background: #0d1526;
                 padding: 16px;
                 border-radius: 10px;
                 border: 1px solid #1a2742;
-                border-top: 3px solid #f59e0b;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             }
             [data-testid="stMetricLabel"] {
@@ -344,12 +347,23 @@ def render_streamlit_app():
                 font-size: 11px !important;
                 font-weight: 600 !important;
                 text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
             }
             [data-testid="stMetricValue"] {
                 color: #f8fafc !important;
                 font-family: monospace !important;
                 font-size: 24px !important;
                 font-weight: 700 !important;
+            }
+            /* Petroleum Crude Gold Accents */
+            .crude-accent {
+                color: #f59e0b;
+            }
+            .subsea-accent {
+                color: #06b6d4;
+            }
+            .state-accent {
+                color: #10b981;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -374,7 +388,6 @@ def render_streamlit_app():
             <span style="color: #f59e0b; font-weight: 800; font-size: 14px;">🛢️ CONCESSION & FIELD SETUP</span>
         </div>
     """, unsafe_allow_html=True)
-
     selected_key = st.sidebar.selectbox(
         "Offshore Concession Preset",
         options=["jubilee", "ten", "sankofa", "custom"],
@@ -521,6 +534,7 @@ def render_streamlit_app():
                 res.contractor_profit_barrels,
             ],
         }
+        # Display using simple Streamlit bar chart
         try:
             import pandas as pd
             df_bar = pd.DataFrame(bar_data).set_index("Allocation Step")
@@ -543,6 +557,7 @@ def render_streamlit_app():
             ]).set_index("Price ($/bbl)")
             st.line_chart(df_sens)
         except Exception:
+            st.caption("Price sensitivity calculated:")
             st.write(sens_points)
 
     st.markdown("---")
@@ -570,13 +585,13 @@ def render_streamlit_app():
     except Exception:
         st.table(table_rows)
 
-    # Invariant Conservation Banner
+    # Conservation Verification Banner
     bbl_sum = res.total_ghana_barrels + res.contractor_total_barrels
     usd_sum = res.total_ghana_revenue_usd + res.contractor_gross_revenue_usd
     st.info(
         f"🔒 **Mathematical Invariant Conservation Verification:** "
-        f"Volume: {bbl_sum:,.2f} bbls == {res.gross_production_barrels:,.2f} bbls (100.00%) | "
-        f"Value: ${usd_sum:,.2f} == ${res.total_gross_revenue_usd:,.2f} (100.00%)"
+        f"Volume Conservation: {bbl_sum:,.2f} bbls == {res.gross_production_barrels:,.2f} bbls (100.00%) | "
+        f"Value Conservation: ${usd_sum:,.2f} == ${res.total_gross_revenue_usd:,.2f} (100.00%)"
     )
 
     # PRMA Act 815 Distribution Breakdown
@@ -588,7 +603,7 @@ def render_streamlit_app():
         st.markdown(f"""
             **GNPC Level A Allocation (30%)**  
             **${prma.gnpc_level_a_allocation_usd:,.2f} USD**  
-            *Direct operational funding for National Oil Company exploration & production.*
+            *Direct operational funding for National Oil Company explorations.*
         """)
     with p2:
         st.markdown(f"""
@@ -709,13 +724,16 @@ def is_running_with_streamlit() -> bool:
         from streamlit.runtime.scriptrunner import get_script_run_ctx
         return get_script_run_ctx() is not None
     except Exception:
+        # Also check common Streamlit cloud environment indicators
         return "STREAMLIT_SERVER_PORT" in os.environ or "STREAMLIT_RUN" in os.environ
 
 
 if __name__ == "__main__":
+    # Check if run with Streamlit CLI or Streamlit Cloud
     if is_running_with_streamlit():
         render_streamlit_app()
     else:
+        # User executed `python app.py` directly from terminal
         parser = argparse.ArgumentParser(description="GNPC Upstream Fiscal Reconciliation Suite (Act 919)")
         parser.add_argument("--test", action="store_true", help="Run automated fiscal unit verification tests")
         parser.add_argument("--field", choices=["jubilee", "ten", "sankofa", "custom"], default="jubilee", help="Concession field preset")
@@ -730,7 +748,8 @@ if __name__ == "__main__":
             run_unit_tests()
             sys.exit(0)
 
-        # If user has Streamlit installed and ran with no CLI arguments, launch the browser app!
+        # Check if user has streamlit installed and didn't specify CLI arguments
+        # If so, automatically launch Streamlit web browser!
         has_cli_args = any(arg in sys.argv for arg in ["--field", "--gross", "--price", "--costs", "--cargo"])
         if not has_cli_args:
             try:
@@ -759,4 +778,5 @@ if __name__ == "__main__":
         print_cli_audit_report(res, cargo_ref=args.cargo)
         print("Tip: Install streamlit with 'pip install streamlit pandas' then run 'streamlit run app.py' for the visual dashboard!\n")
 else:
+    # If imported directly by Streamlit runner
     render_streamlit_app()

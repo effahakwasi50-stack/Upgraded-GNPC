@@ -1,0 +1,6 @@
+{
+  "name": "GNPC Upstream Fiscal Reconciliation Suite",
+  "description": "Ghana Upstream Fiscal Engine & Petroleum Entitlement Reconciliation under Act 919",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
