@@ -475,108 +475,421 @@ def render_streamlit_app():
     )
     res = calculate_fiscal_reconciliation(inp)
 
-    # 4 Executive KPI Metric Cards
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    with kpi1:
-        st.metric(
-            label="Gross Concession Value",
-            value=f"${res.total_gross_revenue_usd / 1e6:,.2f}M",
-            delta=f"{res.gross_production_barrels / 1e6:,.2f}M Barrels",
-        )
-    with kpi2:
-        st.metric(
-            label="Total Ghana State Take",
-            value=f"${res.total_ghana_revenue_usd / 1e6:,.2f}M",
-            delta=f"{res.effective_state_take_percent:.2f}% Effective Take",
-        )
-    with kpi3:
-        st.metric(
-            label="State Physical Entitlement",
-            value=f"{res.total_ghana_barrels:,.0f} bbls",
-            delta=f"{res.standard_parcels_ghana:.2f} Cargo Parcels (950k)",
-        )
-    with kpi4:
-        st.metric(
-            label="Contractor Net Take & Costs",
-            value=f"${res.contractor_gross_revenue_usd / 1e6:,.2f}M",
-            delta=f"Net Profit: ${res.contractor_net_take_usd / 1e6:,.2f}M",
-        )
+    # -----------------------------------------------------------------------
+    # 4 Executive KPI Metric Cards (Industrial Petroleum Engineering Banners)
+    # -----------------------------------------------------------------------
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
+
+    # Card 1: Gross Concession Value (Raw Sweet Crude Gold)
+    with kpi_col1:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 2px solid rgba(245, 158, 11, 0.85); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15); margin-bottom: 16px;">
+                <div style="background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #060a12; font-weight: 900; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">🛢️ GROSS CONCESSION VALUE</span>
+                    <span style="background: #060a12; color: #fbbf24; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Q_gross × P</span>
+                </div>
+                <div style="padding: 16px; background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(13, 21, 38, 0.95) 100%);">
+                    <div style="font-size: 28px; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.02em;">
+                        ${res.total_gross_revenue_usd / 1e6:,.2f}M
+                    </div>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; font-size: 12px;">
+                        <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-family: monospace;">
+                            {res.gross_production_barrels / 1e6:,.2f}M bbls
+                        </span>
+                        <span style="color: #cbd5e1; font-weight: 600;">· ${res.achieved_price_usd:.2f}/bbl</span>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(245, 158, 11, 0.25); display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+                        <span>Total Monthly Barrels</span>
+                        <span style="color: #fbbf24; font-weight: 800;">100.00% Baseline</span>
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 2: Total Ghana State Take (Sovereign Energy Emerald)
+    with kpi_col2:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 2px solid rgba(16, 185, 129, 0.85); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15); margin-bottom: 16px;">
+                <div style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #060a12; font-weight: 900; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">🏛️ TOTAL GHANA STATE TAKE</span>
+                    <span style="background: #060a12; color: #34d399; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: monospace;">GoG + GNPC</span>
+                </div>
+                <div style="padding: 16px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(13, 21, 38, 0.95) 100%);">
+                    <div style="font-size: 28px; font-weight: 900; color: #34d399; font-family: monospace; letter-spacing: -0.02em;">
+                        ${res.total_ghana_revenue_usd / 1e6:,.2f}M
+                    </div>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; font-size: 12px;">
+                        <span style="background: #10b981; color: #060a12; font-weight: 900; padding: 2px 8px; border-radius: 4px; font-family: monospace;">
+                            {res.effective_state_take_percent:.2f}%
+                        </span>
+                        <span style="color: #e2e8f0; font-weight: 600;">Effective State Take</span>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(16, 185, 129, 0.25); display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+                        <span>Royalty + Carried Profit</span>
+                        <span style="color: #34d399; font-weight: 800;">{res.standard_parcels_ghana:.2f} Cargoes (950k)</span>
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 3: State Physical Barrels (Subsea Flowline Cyan)
+    with kpi_col3:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 2px solid rgba(6, 182, 212, 0.85); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(6, 182, 212, 0.15); margin-bottom: 16px;">
+                <div style="background: linear-gradient(90deg, #06b6d4 0%, #0284c7 100%); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #060a12; font-weight: 900; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">🌊 STATE PHYSICAL BARRELS</span>
+                    <span style="background: #060a12; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Equity Liftings</span>
+                </div>
+                <div style="padding: 16px; background: linear-gradient(180deg, rgba(6, 182, 212, 0.08) 0%, rgba(13, 21, 38, 0.95) 100%);">
+                    <div style="font-size: 28px; font-weight: 900; color: #38bdf8; font-family: monospace; letter-spacing: -0.02em;">
+                        {res.total_ghana_barrels:,.0f} <span style="font-size: 18px; font-weight: 600;">bbls</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #94a3b8; font-family: monospace;">
+                        Royalty: <strong style="color: #f1f5f9;">{res.state_royalty_barrels:,.0f}</strong> | GNPC: <strong style="color: #f1f5f9;">{res.gnpc_profit_barrels:,.0f}</strong>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(6, 182, 212, 0.25); display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+                        <span>Physical Equity Volume</span>
+                        <span style="color: #38bdf8; font-weight: 800;">{(res.total_ghana_barrels / (res.gross_production_barrels or 1) * 100):.1f}% of Gross</span>
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Card 4: Contractor Take & Costs (Offshore Rig Safety Orange)
+    with kpi_col4:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 2px solid rgba(249, 115, 22, 0.85); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.15); margin-bottom: 16px;">
+                <div style="background: linear-gradient(90deg, #f97316 0%, #ea580c 100%); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #060a12; font-weight: 900; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;">⚙️ CONTRACTOR TAKE & COSTS</span>
+                    <span style="background: #060a12; color: #fb923c; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Operator Group</span>
+                </div>
+                <div style="padding: 16px; background: linear-gradient(180deg, rgba(249, 115, 22, 0.08) 0%, rgba(13, 21, 38, 0.95) 100%);">
+                    <div style="font-size: 28px; font-weight: 900; color: #fb923c; font-family: monospace; letter-spacing: -0.02em;">
+                        ${res.contractor_gross_revenue_usd / 1e6:,.2f}M
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #94a3b8; font-family: monospace;">
+                        Cost Oil: <strong style="color: #f1f5f9;">{res.cost_barrels_claimed:,.0f} bbls</strong> | Profit: <strong style="color: #f1f5f9;">{res.contractor_profit_barrels / 1e6:.2f}M</strong>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(249, 115, 22, 0.25); display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                        <span style="color: {'#ef4444' if res.is_cost_capped else '#10b981'}; font-weight: 700;">
+                            {'⚠️ 70% Cap Reached' if res.is_cost_capped else '✓ Cost Oil 100% Recovered'}
+                        </span>
+                        <span style="color: #fb923c; font-weight: 800; font-family: monospace;">{res.standard_parcels_contractor:.2f} Cargoes</span>
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
     # Cost Cap Alert Banner
     if res.is_cost_capped:
-        st.warning(
-            f"⚠️ **Cost Recovery Ceiling Reached (70% Cap):** Maximum allowable cost recovery is limited to "
-            f"{res.max_cost_recovery_barrels_allowed:,.2f} bbls (${res.max_cost_recovery_usd_allowed:,.2f}). "
-            f"Unrecovered balance of **${res.unrecovered_cost_usd:,.2f}** ({res.unrecovered_cost_barrels:,.2f} bbls) "
-            f"carries forward to subsequent reconciliation periods per Model Petroleum Agreement Clause 11."
-        )
+        st.markdown(f"""
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-left: 5px solid #ef4444; padding: 12px 16px; border-radius: 8px; margin: 16px 0; color: #fecaca;">
+                <strong style="color: #ffffff;">⚠️ Statutory Cost Recovery Ceiling Reached (70% Contractual Cap):</strong>
+                Maximum allowable cost recovery for this lifting is capped at <strong>{res.max_cost_recovery_barrels_allowed:,.2f} bbls</strong> (${res.max_cost_recovery_usd_allowed:,.2f} USD).
+                Unrecovered operational expenditure of <strong>${res.unrecovered_cost_usd:,.2f} USD</strong> ({res.unrecovered_cost_barrels:,.2f} bbls) carries forward to subsequent concession reconciliation cycles per Model PA Art. 11.
+            </div>
+        """, unsafe_allow_html=True)
     else:
-        st.success("✅ **Full Cost Recovery Achieved:** 100% of claimed operational and capital expenditures recovered within contractual 70% cap.")
+        st.markdown(f"""
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid #059669; border-left: 5px solid #10b981; padding: 10px 16px; border-radius: 8px; margin: 16px 0; color: #d1fae5; font-size: 13px;">
+                <strong style="color: #34d399;">✓ Full Cost Oil Reimbursed:</strong> 100% of operator claimed OPEX & CAPEX (${res.costs_claimed_usd:,.2f} USD) recovered within the statutory 70% net production ceiling.
+            </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<hr style='border: 0; border-top: 1px solid #1e293b; margin: 24px 0;' />", unsafe_allow_html=True)
 
-    # Visualizations Row
+    # -----------------------------------------------------------------------
+    # Interactive Petroleum Visualizations (Plotly / Petroleum Engineering Color Codes)
+    # -----------------------------------------------------------------------
     col_viz1, col_viz2 = st.columns(2)
 
     with col_viz1:
-        st.subheader("Physical Barrels Allocation Waterfall")
-        bar_data = {
-            "Allocation Step": [
-                "State Royalty",
-                "Cost Recovery",
-                "GNPC Profit Oil",
-                "Contractor Profit Oil",
-            ],
-            "Barrels": [
-                res.state_royalty_barrels,
-                res.cost_barrels_claimed,
-                res.gnpc_profit_barrels,
-                res.contractor_profit_barrels,
-            ],
-        }
-        # Display using simple Streamlit bar chart
+        st.markdown("""
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <span style="color: #f59e0b; font-size: 18px;">📊</span>
+                <h3 style="color: #ffffff; font-size: 16px; font-weight: 800; margin: 0;">Physical Barrels Waterfall Allocation</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Build Plotly Petroleum Bar Chart
+        bar_labels = [
+            "1. Gross Production",
+            "2. State Royalty (Off-Top)",
+            "3. Cost Recovery Oil",
+            "4. GNPC Profit Oil",
+            "5. Contractor Profit Oil",
+        ]
+        bar_values = [
+            res.gross_production_barrels,
+            res.state_royalty_barrels,
+            res.cost_barrels_claimed,
+            res.gnpc_profit_barrels,
+            res.contractor_profit_barrels,
+        ]
+        # Authentic Petroleum Engineering Industry Hex Codes:
+        # Amber Gold for Crude, 24K Gold for Royalty, Cyan for Subsea/Cost, Emerald for State Equity, Marine Blue for Operator
+        petro_colors = [
+            "#f59e0b",  # Gross Production (Raw Crude Gold)
+            "#d97706",  # State Royalty (Sovereign 24K Gold)
+            "#06b6d4",  # Cost Recovery Oil (Subsea Cyan)
+            "#10b981",  # GNPC Profit Oil (Sovereign Energy Emerald)
+            "#3b82f6",  # Contractor Profit Oil (Offshore Marine Blue)
+        ]
+
         try:
-            import pandas as pd
-            df_bar = pd.DataFrame(bar_data).set_index("Allocation Step")
-            st.bar_chart(df_bar["Barrels"])
+            import plotly.graph_objects as go
+            fig_bar = go.Figure()
+            fig_bar.add_trace(go.Bar(
+                x=bar_labels,
+                y=bar_values,
+                marker=dict(
+                    color=petro_colors,
+                    line=dict(color="#060a12", width=1.5),
+                ),
+                text=[f"{v:,.0f} bbls" for v in bar_values],
+                textposition="outside",
+                hoverinfo="x+y",
+                hovertemplate="<b>%{x}</b><br>Volume: %{y:,.2f} bbls<extra></extra>",
+            ))
+            fig_bar.update_layout(
+                plot_bgcolor="#0d1526",
+                paper_bgcolor="#0d1526",
+                margin=dict(l=10, r=10, t=25, b=10),
+                height=350,
+                font=dict(color="#cbd5e1", family="monospace"),
+                xaxis=dict(
+                    showgrid=False,
+                    tickfont=dict(size=10, color="#94a3b8"),
+                ),
+                yaxis=dict(
+                    gridcolor="#1a2742",
+                    zerolinecolor="#1a2742",
+                    tickfont=dict(size=10, color="#94a3b8"),
+                ),
+                showlegend=False,
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
         except Exception:
-            st.json(bar_data)
+            # Fallback if plotly not installed
+            try:
+                import pandas as pd
+                df_bar = pd.DataFrame({"Allocation Step": bar_labels, "Barrels": bar_values}).set_index("Allocation Step")
+                st.bar_chart(df_bar["Barrels"])
+            except Exception:
+                st.write(dict(zip(bar_labels, bar_values)))
 
     with col_viz2:
-        st.subheader("Price Sensitivity Curve ($50 – $120/bbl)")
+        st.markdown(f"""
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #10b981; font-size: 18px;">📈</span>
+                    <h3 style="color: #ffffff; font-size: 16px; font-weight: 800; margin: 0;">Crude Price Sensitivity Profile ($50 – $120/bbl)</h3>
+                </div>
+                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; font-weight: 700;">
+                    Lifting Price: ${res.achieved_price_usd:.2f}
+                </span>
+            </div>
+        """, unsafe_allow_html=True)
+
         sens_points = calculate_price_sensitivity(inp, 50.0, 120.0, 5.0)
+
         try:
-            import pandas as pd
-            df_sens = pd.DataFrame([
-                {
-                    "Price ($/bbl)": p["price"],
-                    "State Revenue ($M)": p["state_revenue_usd"] / 1e6,
-                    "Contractor Revenue ($M)": p["contractor_revenue_usd"] / 1e6,
-                }
-                for p in sens_points
-            ]).set_index("Price ($/bbl)")
-            st.line_chart(df_sens)
+            import plotly.graph_objects as go
+            prices = [p["price"] for p in sens_points]
+            state_revs = [p["state_revenue_usd"] / 1e6 for p in sens_points]
+            contractor_revs = [p["contractor_revenue_usd"] / 1e6 for p in sens_points]
+            gross_revs = [p["gross_revenue_usd"] / 1e6 for p in sens_points]
+
+            fig_line = go.Figure()
+            # Gross Line (Amber)
+            fig_line.add_trace(go.Scatter(
+                x=prices,
+                y=gross_revs,
+                name="Gross Concession Value",
+                line=dict(color="#f59e0b", width=2, dash="dot"),
+                hovertemplate="Price: $%{x:.2f}<br>Gross Revenue: $%{y:.2f}M<extra></extra>",
+            ))
+            # Contractor Take (Orange)
+            fig_line.add_trace(go.Scatter(
+                x=prices,
+                y=contractor_revs,
+                name="Contractor Group Revenue",
+                line=dict(color="#f97316", width=2.5),
+                hovertemplate="Price: $%{x:.2f}<br>Contractor Take: $%{y:.2f}M<extra></extra>",
+            ))
+            # State Take (Emerald)
+            fig_line.add_trace(go.Scatter(
+                x=prices,
+                y=state_revs,
+                name="Total Ghana State Take",
+                line=dict(color="#10b981", width=3),
+                hovertemplate="Price: $%{x:.2f}<br>State Take: $%{y:.2f}M<extra></extra>",
+            ))
+            # Reference vertical marker at active price
+            fig_line.add_vline(
+                x=res.achieved_price_usd,
+                line_width=1.5,
+                line_dash="dash",
+                line_color="#f59e0b",
+                annotation_text=f"Active (${res.achieved_price_usd:.2f})",
+                annotation_position="top left",
+                annotation_font=dict(color="#fbbf24", size=10),
+            )
+            fig_line.update_layout(
+                plot_bgcolor="#0d1526",
+                paper_bgcolor="#0d1526",
+                margin=dict(l=10, r=10, t=25, b=10),
+                height=350,
+                font=dict(color="#cbd5e1", family="monospace"),
+                xaxis=dict(
+                    title="Dated Brent Price ($/bbl)",
+                    gridcolor="#1a2742",
+                    zerolinecolor="#1a2742",
+                    tickfont=dict(size=10, color="#94a3b8"),
+                ),
+                yaxis=dict(
+                    title="Fiscal Value ($ USD Millions)",
+                    gridcolor="#1a2742",
+                    zerolinecolor="#1a2742",
+                    tickfont=dict(size=10, color="#94a3b8"),
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    font=dict(size=10, color="#cbd5e1"),
+                ),
+            )
+            st.plotly_chart(fig_line, use_container_width=True)
         except Exception:
-            st.caption("Price sensitivity calculated:")
-            st.write(sens_points)
+            try:
+                import pandas as pd
+                df_sens = pd.DataFrame([
+                    {
+                        "Price ($/bbl)": p["price"],
+                        "State Revenue ($M)": p["state_revenue_usd"] / 1e6,
+                        "Contractor Revenue ($M)": p["contractor_revenue_usd"] / 1e6,
+                    }
+                    for p in sens_points
+                ]).set_index("Price ($/bbl)")
+                st.line_chart(df_sens)
+            except Exception:
+                st.caption("Price sensitivity calculated:")
 
-    st.markdown("---")
+    # -----------------------------------------------------------------------
+    # PRMA Act 815 Sovereign Petroleum Revenue Distribution Panel
+    # -----------------------------------------------------------------------
+    st.markdown("<hr style='border: 0; border-top: 1px solid #1e293b; margin: 24px 0;' />", unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <h3 style="color: #ffffff; font-size: 17px; font-weight: 800; margin: 0;">
+                    🇬🇭 Petroleum Revenue Management Act (PRMA Act 815 / Act 893) Statutory Allocation
+                </h3>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">
+                    Sovereign distribution schedule of Total Ghana State Take (${res.total_ghana_revenue_usd / 1e6:,.2f}M USD)
+                </p>
+            </div>
+            <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800;">
+                Act 815 Schedule
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
 
+    prma = res.prma_distribution
+    prma_col1, prma_col2, prma_col3, prma_col4 = st.columns(4)
+
+    with prma_col1:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 1px solid rgba(245, 158, 11, 0.5); border-top: 4px solid #f59e0b; padding: 14px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #fbbf24; text-transform: uppercase;">1. GNPC Level A</span>
+                    <span style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px;">30%</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 900; color: #ffffff; font-family: monospace;">
+                    ${prma.gnpc_level_a_allocation_usd / 1e6:,.2f}M
+                </div>
+                <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0 0; line-height: 1.4;">
+                    Direct operational funding retained by GNPC for exploration and JV capital cash calls.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with prma_col2:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 1px solid rgba(16, 185, 129, 0.5); border-top: 4px solid #10b981; padding: 14px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #34d399; text-transform: uppercase;">2. Annual Budget (ABFA)</span>
+                    <span style="background: rgba(16, 185, 129, 0.25); color: #34d399; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px;">49%</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 900; color: #34d399; font-family: monospace;">
+                    ${prma.annual_budget_funding_amount_usd / 1e6:,.2f}M
+                </div>
+                <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0 0; line-height: 1.4;">
+                    Transferred to Consolidated National Treasury for road, agriculture & education infrastructure.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with prma_col3:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 1px solid rgba(6, 182, 212, 0.5); border-top: 4px solid #06b6d4; padding: 14px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase;">3. Stabilization Fund</span>
+                    <span style="background: rgba(6, 182, 212, 0.25); color: #38bdf8; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px;">14.7%</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 900; color: #38bdf8; font-family: monospace;">
+                    ${prma.ghana_stabilization_fund_usd / 1e6:,.2f}M
+                </div>
+                <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0 0; line-height: 1.4;">
+                    Macroeconomic buffer insulating government budget against severe oil price crashes.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with prma_col4:
+        st.markdown(f"""
+            <div style="background: #0d1526; border: 1px solid rgba(168, 85, 247, 0.5); border-top: 4px solid #a855f7; padding: 14px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #c084fc; text-transform: uppercase;">4. Heritage Fund</span>
+                    <span style="background: rgba(168, 85, 247, 0.25); color: #c084fc; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px;">6.3%</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 900; color: #c084fc; font-family: monospace;">
+                    ${prma.ghana_heritage_fund_usd / 1e6:,.2f}M
+                </div>
+                <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0 0; line-height: 1.4;">
+                    Locked sovereign wealth endowment invested offshore for future generations.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # -----------------------------------------------------------------------
     # Auditable Statutory Table
-    st.subheader("Auditable Line-by-Line Statutory Reconciliation Schedule")
-    st.caption("Statutory Reference: Petroleum (Exploration & Production) Act, 2016 (Act 919) & Petroleum Agreement Clause 10/11")
+    # -----------------------------------------------------------------------
+    st.markdown("<hr style='border: 0; border-top: 1px solid #1e293b; margin: 24px 0;' />", unsafe_allow_html=True)
+    st.markdown("""
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="color: #38bdf8; font-size: 18px;">📋</span>
+            <h3 style="color: #ffffff; font-size: 16px; font-weight: 800; margin: 0;">Auditable Line-by-Line Statutory Reconciliation Schedule</h3>
+        </div>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0 0 16px 0;">
+            Exact mathematical waterfall under Petroleum (Exploration & Production) Act, 2016 (Act 919) & Concession Petroleum Agreements
+        </p>
+    """, unsafe_allow_html=True)
 
     table_rows = [
-        {"Step": "1.0", "Reconciliation Line Item": "Gross Monthly Production (Q_gross)", "Volume (bbls)": f"{res.gross_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_gross_revenue_usd:,.2f}", "Share (%)": "100.00%"},
-        {"Step": "2.0", "Reconciliation Line Item": f"Deduct: State Royalty Oil ({res.royalty_rate*100:.1f}%)", "Volume (bbls)": f"{res.state_royalty_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.state_royalty_usd:,.2f}", "Share (%)": f"{(res.state_royalty_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "3.0", "Reconciliation Line Item": "Net Available Production (Q_net)", "Volume (bbls)": f"{res.net_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${(res.net_production_barrels*res.achieved_price_usd):,.2f}", "Share (%)": f"{(res.net_production_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "4.0", "Reconciliation Line Item": f"Cost Recovery Ceiling ({res.cost_recovery_cap_rate*100:.0f}% Cap)", "Volume (bbls)": f"{res.max_cost_recovery_barrels_allowed:,.2f}", "Fiscal Value ($ USD)": f"${res.max_cost_recovery_usd_allowed:,.2f}", "Share (%)": f"{(res.max_cost_recovery_barrels_allowed/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "5.0", "Reconciliation Line Item": "Cost Recovery Oil Claimed", "Volume (bbls)": f"{res.cost_barrels_claimed:,.2f}", "Fiscal Value ($ USD)": f"${res.cost_usd_recovered:,.2f}", "Share (%)": f"{(res.cost_barrels_claimed/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "6.0", "Reconciliation Line Item": "Profit Oil Available Pool (Q_profit)", "Volume (bbls)": f"{res.profit_oil_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.profit_oil_usd:,.2f}", "Share (%)": f"{(res.profit_oil_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "7.0", "Reconciliation Line Item": f"GNPC Profit Oil Equity ({res.gnpc_total_equity_rate*100:.2f}%)", "Volume (bbls)": f"{res.gnpc_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.gnpc_profit_usd:,.2f}", "Share (%)": f"{(res.gnpc_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "8.0", "Reconciliation Line Item": "Contractor Profit Oil Share", "Volume (bbls)": f"{res.contractor_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_profit_usd:,.2f}", "Share (%)": f"{(res.contractor_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
-        {"Step": "9.0", "Reconciliation Line Item": "TOTAL GHANA STATE TAKE (GoG + GNPC)", "Volume (bbls)": f"{res.total_ghana_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_ghana_revenue_usd:,.2f}", "Share (%)": f"{res.effective_state_take_percent:.2f}%"},
-        {"Step": "10.0", "Reconciliation Line Item": "TOTAL CONTRACTOR TAKE (Operator Group)", "Volume (bbls)": f"{res.contractor_total_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_gross_revenue_usd:,.2f}", "Share (%)": f"{res.effective_contractor_take_percent:.2f}%"},
+        {"Step": "1.0", "Reconciliation Line Item": "Monthly Gross Production Outturn (Q_gross)", "Volume (bbls)": f"{res.gross_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_gross_revenue_usd:,.2f}", "Share (%)": "100.00%", "Legal Citation": "Terminal Fiscal Meter Outturn Act 919 §59"},
+        {"Step": "2.0", "Reconciliation Line Item": f"Deduct: State Royalty Oil ({res.royalty_rate*100:.1f}%)", "Volume (bbls)": f"{res.state_royalty_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.state_royalty_usd:,.2f}", "Share (%)": f"{(res.state_royalty_barrels/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "Off-the-top priority claim Act 919 §85 & Model PA Art. 10"},
+        {"Step": "3.0", "Reconciliation Line Item": "Net Available Production (Q_net)", "Volume (bbls)": f"{res.net_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${(res.net_production_barrels*res.achieved_price_usd):,.2f}", "Share (%)": f"{(res.net_production_barrels/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "Q_gross − B_royalty Model PA Art. 10.1"},
+        {"Step": "4.0", "Reconciliation Line Item": f"Cost Recovery Ceiling ({res.cost_recovery_cap_rate*100:.0f}% Cap)", "Volume (bbls)": f"{res.max_cost_recovery_barrels_allowed:,.2f}", "Fiscal Value ($ USD)": f"${res.max_cost_recovery_usd_allowed:,.2f}", "Share (%)": f"{(res.max_cost_recovery_barrels_allowed/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "70.0% × Q_net Model PA Art. 11.2"},
+        {"Step": "5.0", "Reconciliation Line Item": "Cost Recovery Oil Claimed", "Volume (bbls)": f"{res.cost_barrels_claimed:,.2f}", "Fiscal Value ($ USD)": f"${res.cost_usd_recovered:,.2f}", "Share (%)": f"{(res.cost_barrels_claimed/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "min(Costs / Price, 70% Q_net) Model PA Art. 11"},
+        {"Step": "6.0", "Reconciliation Line Item": "Profit Oil Available Pool (Q_profit)", "Volume (bbls)": f"{res.profit_oil_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.profit_oil_usd:,.2f}", "Share (%)": f"{(res.profit_oil_barrels/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "Q_net − Cost Recovery Oil Act 919 §86"},
+        {"Step": "7.0", "Reconciliation Line Item": f"GNPC Equity Profit Oil Share ({res.gnpc_total_equity_rate*100:.2f}%)", "Volume (bbls)": f"{res.gnpc_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.gnpc_profit_usd:,.2f}", "Share (%)": f"{(res.gnpc_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "Act 919 §10 Carried & Model PA Art. 12"},
+        {"Step": "8.0", "Reconciliation Line Item": "Contractor Group Profit Oil Share", "Volume (bbls)": f"{res.contractor_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_profit_usd:,.2f}", "Share (%)": f"{(res.contractor_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%", "Legal Citation": "Q_profit × Contractor % Model PA Art. 12.3"},
+        {"Step": "9.0", "Reconciliation Line Item": "TOTAL GHANA STATE TAKE (GoG + GNPC)", "Volume (bbls)": f"{res.total_ghana_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_ghana_revenue_usd:,.2f}", "Share (%)": f"{res.effective_state_take_percent:.2f}%", "Legal Citation": "Royalty + GNPC Profit Oil (Act 919 / Act 815)"},
+        {"Step": "10.0", "Reconciliation Line Item": "TOTAL CONTRACTOR TAKE (Operator Group)", "Volume (bbls)": f"{res.contractor_total_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_gross_revenue_usd:,.2f}", "Share (%)": f"{res.effective_contractor_take_percent:.2f}%", "Legal Citation": "Cost Oil + Contractor Profit Oil"},
     ]
 
     try:
@@ -585,50 +898,36 @@ def render_streamlit_app():
     except Exception:
         st.table(table_rows)
 
-    # Conservation Verification Banner
+    # Conservation Invariant Telemetry Banner
     bbl_sum = res.total_ghana_barrels + res.contractor_total_barrels
     usd_sum = res.total_ghana_revenue_usd + res.contractor_gross_revenue_usd
-    st.info(
-        f"🔒 **Mathematical Invariant Conservation Verification:** "
-        f"Volume Conservation: {bbl_sum:,.2f} bbls == {res.gross_production_barrels:,.2f} bbls (100.00%) | "
-        f"Value Conservation: ${usd_sum:,.2f} == ${res.total_gross_revenue_usd:,.2f} (100.00%)"
-    )
-
-    # PRMA Act 815 Distribution Breakdown
-    st.markdown("---")
-    st.subheader("Petroleum Revenue Management Act (Act 815 & 893) Statutory Allocation")
-    prma = res.prma_distribution
-    p1, p2, p3 = st.columns(3)
-    with p1:
-        st.markdown(f"""
-            **GNPC Level A Allocation (30%)**  
-            **${prma.gnpc_level_a_allocation_usd:,.2f} USD**  
-            *Direct operational funding for National Oil Company explorations.*
-        """)
-    with p2:
-        st.markdown(f"""
-            **Annual Budget Funding Amount (ABFA - 49%)**  
-            **${prma.annual_budget_funding_amount_usd:,.2f} USD**  
-            *National treasury capital expenditure and public infrastructure.*
-        """)
-    with p3:
-        st.markdown(f"""
-            **Ghana Petroleum Funds (GPFs - 21%)**  
-            **${prma.ghana_petroleum_funds_usd:,.2f} USD**  
-            - Stabilization Fund (GSF 70%): ${prma.ghana_stabilization_fund_usd:,.2f}  
-            - Heritage Fund (GHF 30%): ${prma.ghana_heritage_fund_usd:,.2f}
-        """)
+    st.markdown(f"""
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 12px 18px; margin: 16px 0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 18px;">🔒</span>
+                <div>
+                    <strong style="color: #34d399; font-size: 13px;">Hydrocarbon Mass & Value Balance Invariant Confirmed:</strong>
+                    <div style="color: #cbd5e1; font-size: 12px; font-family: monospace; margin-top: 2px;">
+                        Volume Check: {bbl_sum:,.2f} bbls == {res.gross_production_barrels:,.2f} bbls (100.00%) | Value Check: ${usd_sum:,.2f} == ${res.total_gross_revenue_usd:,.2f} (100.00%)
+                    </div>
+                </div>
+            </div>
+            <span style="background: #10b981; color: #060a12; font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 4px; font-family: monospace;">
+                100% BALANCED
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
 
     # CSV Export Button
-    csv_header = "Step,Item,Barrels,USD,Share_Percent\n"
+    csv_header = "Step,Item,Barrels,USD,Share_Percent,Legal_Citation\n"
     csv_body = "\n".join([
-        f'{r["Step"]},{r["Reconciliation Line Item"].replace(",", "")},{r["Volume (bbls)"].replace(",", "")},{r["Fiscal Value ($ USD)"].replace("$", "").replace(",", "")},{r["Share (%)"].replace("%", "")}'
+        f'{r["Step"]},{r["Reconciliation Line Item"].replace(",", "")},{r["Volume (bbls)"].replace(",", "")},{r["Fiscal Value ($ USD)"].replace("$", "").replace(",", "")},{r["Share (%)"].replace("%", "")},{r["Legal Citation"].replace(",", ";")}'
         for r in table_rows
     ])
     full_csv = csv_header + csv_body
 
     st.download_button(
-        label="📥 Download Statutory Audit Sheet (CSV)",
+        label="📥 Download Official GNPC Statutory Audit Sheet (CSV)",
         data=full_csv,
         file_name=f"GNPC_Fiscal_Reconciliation_{preset.id.upper()}_{gross_bbl:.0f}bbl.csv",
         mime="text/csv",

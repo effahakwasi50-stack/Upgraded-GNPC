@@ -111,6 +111,28 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {Object.values(CONCESSION_PRESETS).map((p) => {
             const isSelected = inputs.concessionId === p.id;
+            const themeColors = {
+              jubilee: {
+                active: 'bg-amber-950/80 border-amber-500 text-amber-200 ring-2 ring-amber-500/40 shadow-md',
+                accent: 'text-amber-400',
+              },
+              ten: {
+                active: 'bg-cyan-950/80 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/40 shadow-md',
+                accent: 'text-cyan-400',
+              },
+              sankofa: {
+                active: 'bg-emerald-950/80 border-emerald-500 text-emerald-200 ring-2 ring-emerald-500/40 shadow-md',
+                accent: 'text-emerald-400',
+              },
+              custom: {
+                active: 'bg-orange-950/80 border-orange-500 text-orange-200 ring-2 ring-orange-500/40 shadow-md',
+                accent: 'text-orange-400',
+              },
+            }[p.id] || {
+              active: 'bg-pe-card-inner border-pe-crude text-pe-title ring-2 ring-amber-500/40',
+              accent: 'text-pe-crude',
+            };
+
             return (
               <button
                 key={p.id}
@@ -118,15 +140,15 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
                 onClick={() => handleSelectPreset(p.id)}
                 className={`flex flex-col text-left p-2.5 rounded-lg border text-xs transition-all ${
                   isSelected
-                    ? 'bg-pe-card-inner border-pe-crude text-pe-title shadow-sm ring-1 ring-amber-500/40'
-                    : 'bg-pe-card-inner/60 border-pe-border text-pe-muted hover:border-pe-light hover:text-pe-title'
+                    ? themeColors.active
+                    : 'bg-pe-card-inner/80 border-pe-border text-pe-muted hover:border-pe-light hover:text-pe-title'
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="font-bold truncate text-pe-title">{p.id.toUpperCase()}</span>
-                  <Droplet className={`w-3 h-3 ${isSelected ? 'text-pe-crude' : 'text-pe-muted'}`} />
+                  <span className="font-extrabold truncate text-sm">{p.id.toUpperCase()}</span>
+                  <Droplet className={`w-3.5 h-3.5 ${isSelected ? themeColors.accent : 'text-pe-muted'}`} />
                 </div>
-                <span className="text-[10px] text-pe-crude font-medium truncate mt-0.5">
+                <span className={`text-[10px] font-semibold truncate mt-0.5 ${isSelected ? themeColors.accent : 'text-pe-muted'}`}>
                   {(p.statutoryRoyaltyRate * 100).toFixed(1)}% Royalty
                 </span>
                 <span className="text-[9px] text-pe-muted font-mono mt-1">

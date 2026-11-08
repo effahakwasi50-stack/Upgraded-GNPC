@@ -3,55 +3,46 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ==========================================================================
-   PETROLEUM ENGINEERING INDUSTRY COLOR THEMES
-   Authentic palettes from upstream oil & gas software:
-   - Schlumberger (SLB) Petrel & DecisionSpace Deepwater
-   - Rig Floor High-Vis Operations (Drilling & Wellhead Telemetry)
-   - Wood Mackenzie & S&P Global Platts Upstream Technical White
-   - GNPC Ghana Sovereign Petroleum Heritage
+   AUTHENTIC PETROLEUM ENGINEERING INDUSTRY STYLING
    ========================================================================== */
 
 :root,
 [data-theme="petrel"] {
-  --pe-canvas: #060a12;
-  --pe-header: #0a101d;
-  --pe-card: #0d1526;
-  --pe-card-inner: #080d18;
-  --pe-border: #1a2742;
-  --pe-border-light: #283a5e;
-  --pe-text-title: #f8fafc;
-  --pe-text-body: #cbd5e1;
-  --pe-text-muted: #8494b2;
+  --pe-canvas: #070c14;
+  --pe-header: #0b1320;
+  --pe-card: #0d1726;
+  --pe-card-inner: #080f1a;
+  --pe-border: #1a2a44;
+  --pe-border-light: #253d63;
+  --pe-text-title: #ffffff;
+  --pe-text-body: #d1d5db;
+  --pe-text-muted: #94a3b8;
   --pe-crude-gold: #f59e0b;
   --pe-crude-amber: #d97706;
-  --pe-crude-light: #fbbf24;
   --pe-subsea-cyan: #06b6d4;
   --pe-rig-orange: #f97316;
   --pe-state-emerald: #10b981;
-  --pe-chart-grid: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="rig-highvis"] {
-  --pe-canvas: #070b0f;
-  --pe-header: #0d141c;
-  --pe-card: #121c27;
-  --pe-card-inner: #0a1017;
-  --pe-border: #1e3144;
-  --pe-border-light: #314d69;
+  --pe-canvas: #090e15;
+  --pe-header: #0f1824;
+  --pe-card: #142233;
+  --pe-card-inner: #0b131e;
+  --pe-border: #223752;
+  --pe-border-light: #315077;
   --pe-text-title: #ffffff;
   --pe-text-body: #e2e8f0;
   --pe-text-muted: #94a3b8;
   --pe-crude-gold: #fbbf24;
   --pe-crude-amber: #f59e0b;
-  --pe-crude-light: #fef08a;
   --pe-subsea-cyan: #38bdf8;
   --pe-rig-orange: #ff6600;
   --pe-state-emerald: #00e676;
-  --pe-chart-grid: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="woodmac"] {
-  --pe-canvas: #f3f6fa;
+  --pe-canvas: #f0f4f8;
   --pe-header: #ffffff;
   --pe-card: #ffffff;
   --pe-card-inner: #f8fafc;
@@ -62,30 +53,26 @@
   --pe-text-muted: #64748b;
   --pe-crude-gold: #b45309;
   --pe-crude-amber: #92400e;
-  --pe-crude-light: #d97706;
   --pe-subsea-cyan: #0284c7;
   --pe-rig-orange: #c2410c;
   --pe-state-emerald: #047857;
-  --pe-chart-grid: rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="gnpc-heritage"] {
   --pe-canvas: #070a08;
-  --pe-header: #0c140e;
-  --pe-card: #111e15;
-  --pe-card-inner: #09110b;
-  --pe-border: #1a3321;
-  --pe-border-light: #2a5235;
-  --pe-text-title: #f0fdf4;
+  --pe-header: #0d160f;
+  --pe-card: #122015;
+  --pe-card-inner: #09120b;
+  --pe-border: #1c3623;
+  --pe-border-light: #2b5437;
+  --pe-text-title: #ffffff;
   --pe-text-body: #bbf7d0;
   --pe-text-muted: #86efac;
   --pe-crude-gold: #eab308;
   --pe-crude-amber: #ca8a04;
-  --pe-crude-light: #fde047;
   --pe-subsea-cyan: #22d3ee;
   --pe-rig-orange: #ef4444;
   --pe-state-emerald: #22c55e;
-  --pe-chart-grid: rgba(255, 255, 255, 0.08);
 }
 
 /* Custom petroleum utility classes */
@@ -109,13 +96,60 @@
 .bg-pe-cyan { background-color: var(--pe-subsea-cyan); }
 .bg-pe-orange { background-color: var(--pe-rig-orange); }
 
+/* Glowing KPI card containers with petroleum energy gradients */
+.pe-kpi-crude {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(13, 23, 38, 0.95) 45%, rgba(8, 15, 26, 0.98) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(245, 158, 11, 0.18), inset 0 1px 0 rgba(245, 158, 11, 0.4);
+}
+
+.pe-kpi-state {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(13, 23, 38, 0.95) 45%, rgba(8, 15, 26, 0.98) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.18), inset 0 1px 0 rgba(16, 185, 129, 0.4);
+}
+
+.pe-kpi-subsea {
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.16) 0%, rgba(13, 23, 38, 0.95) 45%, rgba(8, 15, 26, 0.98) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(6, 182, 212, 0.18), inset 0 1px 0 rgba(6, 182, 212, 0.4);
+}
+
+.pe-kpi-contractor {
+  background: linear-gradient(180deg, rgba(249, 115, 22, 0.16) 0%, rgba(13, 23, 38, 0.95) 45%, rgba(8, 15, 26, 0.98) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(249, 115, 22, 0.18), inset 0 1px 0 rgba(249, 115, 22, 0.4);
+}
+
+/* Light mode overrides for WoodMac */
+[data-theme="woodmac"] .pe-kpi-crude {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 60%);
+  border: 1px solid #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+[data-theme="woodmac"] .pe-kpi-state {
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 60%);
+  border: 1px solid #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+[data-theme="woodmac"] .pe-kpi-subsea {
+  background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 60%);
+  border: 1px solid #06b6d4;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+}
+[data-theme="woodmac"] .pe-kpi-contractor {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 60%);
+  border: 1px solid #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+}
+
 /* Range sliders styled for petroleum control console */
 input[type=range].pe-slider-crude {
-  accent-color: var(--pe-crude-gold);
+  accent-color: #f59e0b;
 }
 input[type=range].pe-slider-cyan {
-  accent-color: var(--pe-subsea-cyan);
+  accent-color: #06b6d4;
 }
 input[type=range].pe-slider-emerald {
-  accent-color: var(--pe-state-emerald);
+  accent-color: #10b981;
 }

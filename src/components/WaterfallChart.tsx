@@ -66,22 +66,22 @@ export const WaterfallChart: React.FC<WaterfallChartProps> = ({ reconciliation }
         ];
 
     // Petroleum Engineering Authentic Color Codes:
-    // 1. Gross = Warm Hydrocarbon Charcoal/Steel
-    // 2. Royalty = Pure Brent Crude Gold
-    // 3. Cost Recovery = Subsea Flowline Cyan/Teal
+    // 1. Gross Production = Raw Sweet Crude Oil Gold
+    // 2. State Royalty = Sovereign 24K Royalty Gold
+    // 3. Cost Recovery = Subsea Flowline Cyan
     // 4. GNPC Profit = Sovereign Energy Emerald
-    // 5. Contractor Profit = Offshore Marine Blue
+    // 5. Contractor Profit = Deep Offshore Marine Blue
     const backgroundColors = [
-      'rgba(148, 163, 184, 0.85)', // Gross Production
-      'rgba(245, 158, 11, 0.90)',  // State Royalty (Crude Gold)
-      'rgba(6, 182, 212, 0.90)',   // Cost Recovery (Subsea Cyan)
-      'rgba(16, 185, 129, 0.90)',  // GNPC Profit (Emerald)
-      'rgba(59, 130, 246, 0.90)',  // Contractor Profit (Offshore Blue)
+      'rgba(245, 158, 11, 0.95)',  // Gross Production (Raw Crude Gold)
+      'rgba(217, 119, 6, 0.95)',   // State Royalty (Sovereign Gold)
+      'rgba(6, 182, 212, 0.95)',   // Cost Recovery (Subsea Cyan)
+      'rgba(16, 185, 129, 0.95)',  // GNPC Profit (Energy Emerald)
+      'rgba(59, 130, 246, 0.95)',  // Contractor Profit (Offshore Marine Blue)
     ];
 
     const borderColors = [
-      'rgb(148, 163, 184)',
       'rgb(245, 158, 11)',
+      'rgb(217, 119, 6)',
       'rgb(6, 182, 212)',
       'rgb(16, 185, 129)',
       'rgb(59, 130, 246)',

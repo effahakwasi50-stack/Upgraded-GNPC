@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   const currentThemeObj = PETROLEUM_THEMES[activeTheme] || PETROLEUM_THEMES.petrel;
 
   return (
-    <header className="border-b border-pe-border bg-pe-header backdrop-blur text-pe-title sticky top-0 z-40 shadow-sm transition-colors duration-200">
+    <header className="border-b border-pe-border border-t-4 border-t-amber-500 bg-pe-header backdrop-blur text-pe-title sticky top-0 z-40 shadow-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Brand & Petroleum Suite Subtitle */}
