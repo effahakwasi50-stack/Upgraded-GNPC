@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
 """
 GNPC Fiscal & Entitlement Reconciliation Suite (Ghana Upstream Fiscal Engine)
------------------------------------------------------------------------------
-Governing Legislation:
+=============================================================================
+Governing Legal Framework:
   - Petroleum (Exploration and Production) Act, 2016 (Act 919)
   - Petroleum Revenue Management Act, 2011 (Act 815 & Act 893)
   - Ghana Model Petroleum Agreements (Jubilee, TEN, Sankofa-Gye Nyame)
 
-This script provides:
-  1. Complete Python petroleum fiscal calculation engine with Act 919 rules.
-  2. Cost recovery 70% contractual cap and carry-forward calculation.
-  3. GNPC Statutory Carried (15%) + Additional Paying Interest (0-5%) split.
-  4. PRMA Act 815 sovereign wealth allocation modeling.
-  5. Built-in CLI audit table report & automated unit tests.
-  6. Optional built-in HTTP server (`python3 app.py --serve [port]`) with JSON API.
+Usage:
+  1. Streamlit Interactive Web App (Recommended):
+     streamlit run app.py
+  2. Direct Python CLI execution (zero external dependencies):
+     python app.py
+  3. Automated Mathematical Unit Verification:
+     python app.py --test
 """
 
+import sys
+import os
+import math
+import json
+import argparse
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
-import sys
-import json
-import math
-import argparse
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import urllib.parse
 
+# ---------------------------------------------------------------------------
+# 1. Statutory Presets & Data Structures
+# ---------------------------------------------------------------------------
 
 @dataclass
 class ConcessionPreset:
@@ -33,21 +35,21 @@ class ConcessionPreset:
     operator: str
     offshore_basin: str
     fpso_name: str
-    statutory_royalty_rate: float  # e.g. 0.05 for 5%
-    default_gross_production: float  # bbls/month
-    default_achieved_price: float  # USD/bbl
-    default_monthly_costs: float  # USD
-    default_carried_interest: float  # 0.15 for 15%
-    default_paying_interest: float  # 0.00 to 0.05
-    cost_recovery_cap: float = 0.70  # standard 70% of Net Production
-    typical_cargo_parcel_size: float = 950000.0
+    statutory_royalty_rate: float
+    default_gross_production: float
+    default_achieved_price: float
+    default_monthly_costs: float
+    default_carried_interest: float
+    default_paying_interest: float
+    cost_recovery_cap: float = 0.70
+    cargo_parcel_size: float = 950000.0
 
 
 CONCESSION_PRESETS: Dict[str, ConcessionPreset] = {
     "jubilee": ConcessionPreset(
         id="jubilee",
         name="Jubilee Field (WCTP & DWT Blocks)",
-        operator="Tullow Ghana Ltd (Operator), Kosmos, GNPC, PetroSA",
+        operator="Tullow Ghana Ltd, Kosmos Energy, GNPC, PetroSA",
         offshore_basin="Tano Deepwater Basin",
         fpso_name="FPSO Kwame Nkrumah (MV21)",
         statutory_royalty_rate=0.05,
@@ -61,7 +63,7 @@ CONCESSION_PRESETS: Dict[str, ConcessionPreset] = {
     "ten": ConcessionPreset(
         id="ten",
         name="TEN Fields (Tweneboa, Enyenra, Ntomme)",
-        operator="Tullow Ghana Ltd, Kosmos, GNPC, PetroSA",
+        operator="Tullow Ghana Ltd, Kosmos Energy, GNPC, PetroSA",
         offshore_basin="Deepwater Tano Basin",
         fpso_name="FPSO Prof. John Evans Atta Mills",
         statutory_royalty_rate=0.05,
@@ -75,7 +77,7 @@ CONCESSION_PRESETS: Dict[str, ConcessionPreset] = {
     "sankofa": ConcessionPreset(
         id="sankofa",
         name="Sankofa-Gye Nyame (OCTP Concession)",
-        operator="Eni Ghana Exploration & Production Ltd, Vitol Upstream, GNPC",
+        operator="Eni Ghana Exploration & Production, Vitol Upstream, GNPC",
         offshore_basin="Cape Three Points Offshore Basin",
         fpso_name="FPSO John Agyekum Kufuor",
         statutory_royalty_rate=0.075,
@@ -88,9 +90,9 @@ CONCESSION_PRESETS: Dict[str, ConcessionPreset] = {
     ),
     "custom": ConcessionPreset(
         id="custom",
-        name="Custom Offshore Exploration Block",
+        name="Custom Exploration Block",
         operator="Joint Operating Concession",
-        offshore_basin="Western / Central Basin Block",
+        offshore_basin="Western / Central Offshore Basin",
         fpso_name="Offshore Production Facility",
         statutory_royalty_rate=0.10,
         default_gross_production=1000000.0,
@@ -129,19 +131,13 @@ class PrmaDistribution:
 @dataclass
 class FiscalReconciliationOutput:
     inputs: FiscalInputs
-
-    # 1. Gross metrics
     gross_production_barrels: float
     achieved_price_usd: float
     total_gross_revenue_usd: float
-
-    # 2. State Royalty
     royalty_rate: float
     state_royalty_barrels: float
     state_royalty_usd: float
     net_production_barrels: float
-
-    # 3. Cost Recovery
     cost_recovery_cap_rate: float
     max_cost_recovery_barrels_allowed: float
     max_cost_recovery_usd_allowed: float
@@ -152,39 +148,30 @@ class FiscalReconciliationOutput:
     unrecovered_cost_usd: float
     unrecovered_cost_barrels: float
     is_cost_capped: bool
-
-    # 4. Profit Oil Split
     profit_oil_barrels: float
     profit_oil_usd: float
-
-    # 5. GNPC & Contractor Split
     gnpc_total_equity_rate: float
     gnpc_profit_barrels: float
     gnpc_profit_usd: float
     contractor_profit_barrels: float
     contractor_profit_usd: float
-
-    # 6. Comprehensive Takes
     total_ghana_barrels: float
     total_ghana_revenue_usd: float
     effective_state_take_percent: float
-
     contractor_total_barrels: float
     contractor_gross_revenue_usd: float
     contractor_net_take_usd: float
     effective_contractor_take_percent: float
-
     standard_parcels_ghana: float
     standard_parcels_contractor: float
-
     prma_distribution: PrmaDistribution
 
 
+# ---------------------------------------------------------------------------
+# 2. Mathematical Fiscal Calculation Engine (Act 919)
+# ---------------------------------------------------------------------------
+
 def calculate_fiscal_reconciliation(inputs: FiscalInputs) -> FiscalReconciliationOutput:
-    """
-    Executes the exact mathematical petroleum fiscal waterfall hierarchy
-    under Ghana Act 919 and Model Petroleum Agreements.
-    """
     gross_bbl = max(0.0, float(inputs.gross_production_barrels or 0.0))
     price = max(0.0, float(inputs.achieved_price_usd or 0.0))
     monthly_costs = max(0.0, float(inputs.monthly_costs_usd or 0.0))
@@ -194,15 +181,11 @@ def calculate_fiscal_reconciliation(inputs: FiscalInputs) -> FiscalReconciliatio
     paying_rate = min(max(0.0, float(inputs.gnpc_paying_interest_rate or 0.0)), 0.50)
     gnpc_total_equity = min(1.0, carried_rate + paying_rate)
 
-    # 1. Total Gross Concession Revenue
     total_gross_revenue = gross_bbl * price
-
-    # 2. State Royalty (off the top, before any cost deductions)
     royalty_bbl = gross_bbl * royalty_rate
     royalty_usd = royalty_bbl * price
     net_production_bbl = max(0.0, gross_bbl - royalty_bbl)
 
-    # 3. Cost Recovery Ceiling (Max 70% of Net Production)
     max_cost_bbl = net_production_bbl * cost_cap
     max_cost_usd = max_cost_bbl * price
 
@@ -213,18 +196,15 @@ def calculate_fiscal_reconciliation(inputs: FiscalInputs) -> FiscalReconciliatio
     unrecovered_cost_bbl = (unrecovered_cost_usd / price) if price > 0.0 else 0.0
     is_cost_capped = (cost_bbl_demanded > max_cost_bbl) and (monthly_costs > 0.0)
 
-    # 4. Profit Oil Available Pool (Q_profit)
     profit_oil_bbl = max(0.0, net_production_bbl - cost_bbl_claimed)
     profit_oil_usd = profit_oil_bbl * price
 
-    # 5. GNPC Equity Profit Oil & Contractor Split
     gnpc_profit_bbl = profit_oil_bbl * gnpc_total_equity
     gnpc_profit_usd = gnpc_profit_bbl * price
 
     contractor_profit_bbl = max(0.0, profit_oil_bbl - gnpc_profit_bbl)
     contractor_profit_usd = contractor_profit_bbl * price
 
-    # 6. Consolidated Takes
     total_ghana_bbl = royalty_bbl + gnpc_profit_bbl
     total_ghana_revenue = total_ghana_bbl * price
 
@@ -247,7 +227,7 @@ def calculate_fiscal_reconciliation(inputs: FiscalInputs) -> FiscalReconciliatio
     standard_parcels_ghana = total_ghana_bbl / parcel_size
     standard_parcels_contractor = contractor_total_bbl / parcel_size
 
-    # PRMA Act 815 Allocations
+    # Petroleum Revenue Management Act (Act 815) Distribution
     gnpc_level_a = total_ghana_revenue * 0.30
     phf_usd = total_ghana_revenue * 0.70
     abfa_usd = phf_usd * 0.70
@@ -309,7 +289,6 @@ def calculate_price_sensitivity(
     max_price: float = 120.0,
     step: float = 5.0,
 ) -> List[Dict]:
-    """Generates price curve points across $50 to $120/bbl."""
     results = []
     p = min_price
     while p <= max_price + 1e-4:
@@ -328,21 +307,299 @@ def calculate_price_sensitivity(
     return results
 
 
-def print_cli_audit_report(result: FiscalReconciliationOutput, cargo_ref: str = "JUB-CARGO-2026/74"):
-    """Prints a structured executive reconciliation table to stdout."""
+# ---------------------------------------------------------------------------
+# 3. Streamlit Interactive Application
+# ---------------------------------------------------------------------------
+
+def render_streamlit_app():
+    import streamlit as st
+
+    st.set_page_config(
+        page_title="GNPC Upstream Fiscal Reconciliation Suite",
+        page_icon="🇬🇭",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
+    # Top Header
+    st.markdown("""
+        <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #334155;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="background: #f59e0b; color: #020617; font-weight: 900; font-size: 13px; padding: 4px 8px; border-radius: 4px;">GNPC</span>
+                <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; padding: 0;">GNPC Upstream Fiscal Reconciliation Suite</h1>
+                <span style="background: #064e3b; color: #34d399; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid #059669;">Act 919 & Model PA</span>
+            </div>
+            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
+                Auditable Monthly Crude Oil Entitlement, Cost Recovery Ceiling & PRMA (Act 815) Revenue Allocation Engine
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Sidebar: Concession Presets and Input Controls
+    st.sidebar.header("Concession & Lifting Setup")
+    selected_key = st.sidebar.selectbox(
+        "Offshore Concession Preset",
+        options=["jubilee", "ten", "sankofa", "custom"],
+        format_func=lambda x: CONCESSION_PRESETS[x].name,
+        index=0,
+    )
+    preset = CONCESSION_PRESETS[selected_key]
+
+    st.sidebar.caption(f"FPSO: **{preset.fpso_name}** | Operator: {preset.operator}")
+    st.sidebar.markdown("---")
+
+    gross_bbl = st.sidebar.number_input(
+        "Monthly Gross Production (bbls)",
+        min_value=10000.0,
+        max_value=10000000.0,
+        value=float(preset.default_gross_production),
+        step=50000.0,
+        format="%.0f",
+    )
+
+    price_usd = st.sidebar.number_input(
+        "Achieved Crude Price ($/bbl)",
+        min_value=10.0,
+        max_value=200.0,
+        value=float(preset.default_achieved_price),
+        step=0.5,
+        format="%.2f",
+    )
+
+    costs_usd = st.sidebar.number_input(
+        "Monthly OPEX + Amortized CAPEX ($ USD)",
+        min_value=0.0,
+        max_value=500000000.0,
+        value=float(preset.default_monthly_costs),
+        step=1000000.0,
+        format="%.0f",
+    )
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Fiscal & Equity Contract Terms")
+
+    royalty_pct = st.sidebar.slider(
+        "Statutory Royalty Rate (%)",
+        min_value=0.0,
+        max_value=25.0,
+        value=float(preset.statutory_royalty_rate * 100.0),
+        step=0.5,
+    ) / 100.0
+
+    cost_cap_pct = st.sidebar.slider(
+        "Cost Recovery Ceiling Cap (%)",
+        min_value=40.0,
+        max_value=100.0,
+        value=float(preset.cost_recovery_cap * 100.0),
+        step=5.0,
+    ) / 100.0
+
+    carried_pct = st.sidebar.slider(
+        "GNPC Carried Interest (%)",
+        min_value=0.0,
+        max_value=30.0,
+        value=float(preset.default_carried_interest * 100.0),
+        step=0.5,
+    ) / 100.0
+
+    paying_pct = st.sidebar.slider(
+        "GNPC Additional Paying Interest (%)",
+        min_value=0.0,
+        max_value=15.0,
+        value=float(preset.default_paying_interest * 100.0),
+        step=0.5,
+    ) / 100.0
+
+    # Calculate
+    inp = FiscalInputs(
+        concession_id=preset.id,
+        concession_name=preset.name,
+        gross_production_barrels=gross_bbl,
+        achieved_price_usd=price_usd,
+        monthly_costs_usd=costs_usd,
+        statutory_royalty_rate=royalty_pct,
+        cost_recovery_cap=cost_cap_pct,
+        gnpc_carried_interest_rate=carried_pct,
+        gnpc_paying_interest_rate=paying_pct,
+    )
+    res = calculate_fiscal_reconciliation(inp)
+
+    # 4 Executive KPI Metric Cards
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with kpi1:
+        st.metric(
+            label="Gross Concession Value",
+            value=f"${res.total_gross_revenue_usd / 1e6:,.2f}M",
+            delta=f"{res.gross_production_barrels / 1e6:,.2f}M Barrels",
+        )
+    with kpi2:
+        st.metric(
+            label="Total Ghana State Take",
+            value=f"${res.total_ghana_revenue_usd / 1e6:,.2f}M",
+            delta=f"{res.effective_state_take_percent:.2f}% Effective Take",
+        )
+    with kpi3:
+        st.metric(
+            label="State Physical Entitlement",
+            value=f"{res.total_ghana_barrels:,.0f} bbls",
+            delta=f"{res.standard_parcels_ghana:.2f} Cargo Parcels (950k)",
+        )
+    with kpi4:
+        st.metric(
+            label="Contractor Net Take & Costs",
+            value=f"${res.contractor_gross_revenue_usd / 1e6:,.2f}M",
+            delta=f"Net Profit: ${res.contractor_net_take_usd / 1e6:,.2f}M",
+        )
+
+    # Cost Cap Alert Banner
+    if res.is_cost_capped:
+        st.warning(
+            f"⚠️ **Cost Recovery Ceiling Reached (70% Cap):** Maximum allowable cost recovery is limited to "
+            f"{res.max_cost_recovery_barrels_allowed:,.2f} bbls (${res.max_cost_recovery_usd_allowed:,.2f}). "
+            f"Unrecovered balance of **${res.unrecovered_cost_usd:,.2f}** ({res.unrecovered_cost_barrels:,.2f} bbls) "
+            f"carries forward to subsequent reconciliation periods per Model Petroleum Agreement Clause 11."
+        )
+    else:
+        st.success("✅ **Full Cost Recovery Achieved:** 100% of claimed operational and capital expenditures recovered within contractual 70% cap.")
+
+    st.markdown("---")
+
+    # Visualizations Row
+    col_viz1, col_viz2 = st.columns(2)
+
+    with col_viz1:
+        st.subheader("Physical Barrels Allocation Waterfall")
+        bar_data = {
+            "Allocation Step": [
+                "State Royalty",
+                "Cost Recovery",
+                "GNPC Profit Oil",
+                "Contractor Profit Oil",
+            ],
+            "Barrels": [
+                res.state_royalty_barrels,
+                res.cost_barrels_claimed,
+                res.gnpc_profit_barrels,
+                res.contractor_profit_barrels,
+            ],
+        }
+        try:
+            import pandas as pd
+            df_bar = pd.DataFrame(bar_data).set_index("Allocation Step")
+            st.bar_chart(df_bar["Barrels"])
+        except Exception:
+            st.json(bar_data)
+
+    with col_viz2:
+        st.subheader("Price Sensitivity Curve ($50 – $120/bbl)")
+        sens_points = calculate_price_sensitivity(inp, 50.0, 120.0, 5.0)
+        try:
+            import pandas as pd
+            df_sens = pd.DataFrame([
+                {
+                    "Price ($/bbl)": p["price"],
+                    "State Revenue ($M)": p["state_revenue_usd"] / 1e6,
+                    "Contractor Revenue ($M)": p["contractor_revenue_usd"] / 1e6,
+                }
+                for p in sens_points
+            ]).set_index("Price ($/bbl)")
+            st.line_chart(df_sens)
+        except Exception:
+            st.write(sens_points)
+
+    st.markdown("---")
+
+    # Auditable Statutory Table
+    st.subheader("Auditable Line-by-Line Statutory Reconciliation Schedule")
+    st.caption("Statutory Reference: Petroleum (Exploration & Production) Act, 2016 (Act 919) & Petroleum Agreement Clause 10/11")
+
+    table_rows = [
+        {"Step": "1.0", "Reconciliation Line Item": "Gross Monthly Production (Q_gross)", "Volume (bbls)": f"{res.gross_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_gross_revenue_usd:,.2f}", "Share (%)": "100.00%"},
+        {"Step": "2.0", "Reconciliation Line Item": f"Deduct: State Royalty Oil ({res.royalty_rate*100:.1f}%)", "Volume (bbls)": f"{res.state_royalty_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.state_royalty_usd:,.2f}", "Share (%)": f"{(res.state_royalty_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "3.0", "Reconciliation Line Item": "Net Available Production (Q_net)", "Volume (bbls)": f"{res.net_production_barrels:,.2f}", "Fiscal Value ($ USD)": f"${(res.net_production_barrels*res.achieved_price_usd):,.2f}", "Share (%)": f"{(res.net_production_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "4.0", "Reconciliation Line Item": f"Cost Recovery Ceiling ({res.cost_recovery_cap_rate*100:.0f}% Cap)", "Volume (bbls)": f"{res.max_cost_recovery_barrels_allowed:,.2f}", "Fiscal Value ($ USD)": f"${res.max_cost_recovery_usd_allowed:,.2f}", "Share (%)": f"{(res.max_cost_recovery_barrels_allowed/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "5.0", "Reconciliation Line Item": "Cost Recovery Oil Claimed", "Volume (bbls)": f"{res.cost_barrels_claimed:,.2f}", "Fiscal Value ($ USD)": f"${res.cost_usd_recovered:,.2f}", "Share (%)": f"{(res.cost_barrels_claimed/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "6.0", "Reconciliation Line Item": "Profit Oil Available Pool (Q_profit)", "Volume (bbls)": f"{res.profit_oil_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.profit_oil_usd:,.2f}", "Share (%)": f"{(res.profit_oil_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "7.0", "Reconciliation Line Item": f"GNPC Profit Oil Equity ({res.gnpc_total_equity_rate*100:.2f}%)", "Volume (bbls)": f"{res.gnpc_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.gnpc_profit_usd:,.2f}", "Share (%)": f"{(res.gnpc_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "8.0", "Reconciliation Line Item": "Contractor Profit Oil Share", "Volume (bbls)": f"{res.contractor_profit_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_profit_usd:,.2f}", "Share (%)": f"{(res.contractor_profit_barrels/(res.gross_production_barrels or 1)*100):.2f}%"},
+        {"Step": "9.0", "Reconciliation Line Item": "TOTAL GHANA STATE TAKE (GoG + GNPC)", "Volume (bbls)": f"{res.total_ghana_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.total_ghana_revenue_usd:,.2f}", "Share (%)": f"{res.effective_state_take_percent:.2f}%"},
+        {"Step": "10.0", "Reconciliation Line Item": "TOTAL CONTRACTOR TAKE (Operator Group)", "Volume (bbls)": f"{res.contractor_total_barrels:,.2f}", "Fiscal Value ($ USD)": f"${res.contractor_gross_revenue_usd:,.2f}", "Share (%)": f"{res.effective_contractor_take_percent:.2f}%"},
+    ]
+
+    try:
+        import pandas as pd
+        st.dataframe(pd.DataFrame(table_rows), use_container_width=True)
+    except Exception:
+        st.table(table_rows)
+
+    # Invariant Conservation Banner
+    bbl_sum = res.total_ghana_barrels + res.contractor_total_barrels
+    usd_sum = res.total_ghana_revenue_usd + res.contractor_gross_revenue_usd
+    st.info(
+        f"🔒 **Mathematical Invariant Conservation Verification:** "
+        f"Volume: {bbl_sum:,.2f} bbls == {res.gross_production_barrels:,.2f} bbls (100.00%) | "
+        f"Value: ${usd_sum:,.2f} == ${res.total_gross_revenue_usd:,.2f} (100.00%)"
+    )
+
+    # PRMA Act 815 Distribution Breakdown
+    st.markdown("---")
+    st.subheader("Petroleum Revenue Management Act (Act 815 & 893) Statutory Allocation")
+    prma = res.prma_distribution
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        st.markdown(f"""
+            **GNPC Level A Allocation (30%)**  
+            **${prma.gnpc_level_a_allocation_usd:,.2f} USD**  
+            *Direct operational funding for National Oil Company exploration & production.*
+        """)
+    with p2:
+        st.markdown(f"""
+            **Annual Budget Funding Amount (ABFA - 49%)**  
+            **${prma.annual_budget_funding_amount_usd:,.2f} USD**  
+            *National treasury capital expenditure and public infrastructure.*
+        """)
+    with p3:
+        st.markdown(f"""
+            **Ghana Petroleum Funds (GPFs - 21%)**  
+            **${prma.ghana_petroleum_funds_usd:,.2f} USD**  
+            - Stabilization Fund (GSF 70%): ${prma.ghana_stabilization_fund_usd:,.2f}  
+            - Heritage Fund (GHF 30%): ${prma.ghana_heritage_fund_usd:,.2f}
+        """)
+
+    # CSV Export Button
+    csv_header = "Step,Item,Barrels,USD,Share_Percent\n"
+    csv_body = "\n".join([
+        f'{r["Step"]},{r["Reconciliation Line Item"].replace(",", "")},{r["Volume (bbls)"].replace(",", "")},{r["Fiscal Value ($ USD)"].replace("$", "").replace(",", "")},{r["Share (%)"].replace("%", "")}'
+        for r in table_rows
+    ])
+    full_csv = csv_header + csv_body
+
+    st.download_button(
+        label="📥 Download Statutory Audit Sheet (CSV)",
+        data=full_csv,
+        file_name=f"GNPC_Fiscal_Reconciliation_{preset.id.upper()}_{gross_bbl:.0f}bbl.csv",
+        mime="text/csv",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 4. Command-Line ASCII Audit Table (Runs without Streamlit)
+# ---------------------------------------------------------------------------
+
+def print_cli_audit_report(result: FiscalReconciliationOutput, cargo_ref: str = "CARGO-2026/74"):
     inp = result.inputs
-    print("\n" + "=" * 90)
+    print("\n" + "=" * 94)
     print("GHANA NATIONAL PETROLEUM CORPORATION (GNPC)")
     print("UPSTREAM FISCAL & ENTITLEMENT RECONCILIATION AUDIT SHEET")
     print("Statutory Authority: Petroleum (Exploration & Production) Act, 2016 (Act 919)")
-    print("=" * 90)
+    print("=" * 94)
     print(f"Asset / Concession : {inp.concession_name}")
     print(f"Lifting Parcel Ref : {cargo_ref}")
     print(f"Crude Price Index  : ${result.achieved_price_usd:.2f} / bbl")
     print(f"Claimed OPEX/CAPEX : ${result.costs_claimed_usd:,.2f} USD")
-    print("-" * 90)
-    print(f"{'Line Item / Waterfall Step':<45} | {'Volume (bbls)':>15} | {'Value (USD)':>18} | {'Share %':>8}")
-    print("-" * 90)
+    print("-" * 94)
+    print(f"{'Line Item / Waterfall Step':<48} | {'Volume (bbls)':>15} | {'Value (USD)':>18} | {'Share %':>8}")
+    print("-" * 94)
 
     rows = [
         ("1.0 Gross Monthly Production (Q_gross)", result.gross_production_barrels, result.total_gross_revenue_usd, 100.0),
@@ -353,30 +610,29 @@ def print_cli_audit_report(result: FiscalReconciliationOutput, cargo_ref: str = 
     ]
 
     if result.is_cost_capped:
-        rows.append((f"    └─ Unrecovered Carry-Forward Balance", result.unrecovered_cost_barrels, result.unrecovered_cost_usd, 0.0))
+        rows.append(("    └─ Unrecovered Carry-Forward Balance", result.unrecovered_cost_barrels, result.unrecovered_cost_usd, 0.0))
 
     rows.extend([
         ("6.0 Profit Oil Pool Available (Q_profit)", result.profit_oil_barrels, result.profit_oil_usd, (result.profit_oil_barrels / (result.gross_production_barrels or 1)) * 100),
         (f"7.0 GNPC Profit Oil Equity ({result.gnpc_total_equity_rate*100:.2f}%)", result.gnpc_profit_barrels, result.gnpc_profit_usd, (result.gnpc_profit_barrels / (result.gross_production_barrels or 1)) * 100),
-        (f"8.0 Contractor Profit Oil Share", result.contractor_profit_barrels, result.contractor_profit_usd, (result.contractor_profit_barrels / (result.gross_production_barrels or 1)) * 100),
+        ("8.0 Contractor Profit Oil Share", result.contractor_profit_barrels, result.contractor_profit_usd, (result.contractor_profit_barrels / (result.gross_production_barrels or 1)) * 100),
         ("9.0 TOTAL GHANA STATE TAKE (GoG + GNPC)", result.total_ghana_barrels, result.total_ghana_revenue_usd, result.effective_state_take_percent),
         ("10.0 TOTAL CONTRACTOR TAKE (Operator Group)", result.contractor_total_barrels, result.contractor_gross_revenue_usd, result.effective_contractor_take_percent),
     ])
 
     for label, bbls, usd, pct in rows:
-        print(f"{label:<45} | {bbls:>15,.2f} | {usd:>18,.2f} | {pct:>7.2f}%")
+        print(f"{label:<48} | {bbls:>15,.2f} | {usd:>18,.2f} | {pct:>7.2f}%")
 
-    print("=" * 90)
+    print("=" * 94)
     bbl_sum = result.total_ghana_barrels + result.contractor_total_barrels
     usd_sum = result.total_ghana_revenue_usd + result.contractor_gross_revenue_usd
     print(f"Conservation Check: {bbl_sum:,.2f} bbls == {result.gross_production_barrels:,.2f} bbls (100.00%)")
     print(f"Revenue Balance   : ${usd_sum:,.2f} == ${result.total_gross_revenue_usd:,.2f} (100.00%)")
     print(f"Effective State Take: {result.effective_state_take_percent:.2f}% | GNPC Parcels: {result.standard_parcels_ghana:.2f} cargoes (950k bbl)")
-    print("=" * 90)
+    print("=" * 94 + "\n")
 
 
 def run_unit_tests():
-    """Runs automated verification tests."""
     print("Running GNPC Fiscal Engine Unit Verification...")
     jubilee = CONCESSION_PRESETS["jubilee"]
     inp = FiscalInputs(
@@ -405,140 +661,64 @@ def run_unit_tests():
     print("All unit verification tests passed successfully!")
 
 
-class GnpcFiscalHttpHandler(BaseHTTPRequestHandler):
-    """Built-in HTTP Handler providing REST APIs for the fiscal engine."""
+# ---------------------------------------------------------------------------
+# 5. Dual Execution Entrypoint (Streamlit vs Direct Python)
+# ---------------------------------------------------------------------------
 
-    def _send_json(self, status_code: int, data: any):
-        payload = json.dumps(data, default=lambda o: asdict(o) if hasattr(o, "__dataclass_fields__") else str(o))
-        self.send_response(status_code)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-        self.wfile.write(payload.encode("utf-8"))
-
-    def do_OPTIONS(self):
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/presets":
-            self._send_json(200, {k: asdict(v) for k, v in CONCESSION_PRESETS.items()})
-        elif parsed.path == "/api/health":
-            self._send_json(200, {"status": "ok", "statute": "Act 919"})
-        else:
-            self._send_json(404, {"error": "Endpoint not found"})
-
-    def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
-        content_length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(content_length).decode("utf-8")
-        try:
-            req_data = json.loads(body) if body else {}
-        except Exception:
-            self._send_json(400, {"error": "Invalid JSON body"})
-            return
-
-        if parsed.path == "/api/calculate":
-            try:
-                preset_id = req_data.get("concessionId", "jubilee")
-                preset = CONCESSION_PRESETS.get(preset_id, CONCESSION_PRESETS["jubilee"])
-                inp = FiscalInputs(
-                    concession_id=preset_id,
-                    concession_name=req_data.get("concessionName", preset.name),
-                    gross_production_barrels=float(req_data.get("grossProductionBarrels", preset.default_gross_production)),
-                    achieved_price_usd=float(req_data.get("achievedPriceUSD", preset.default_achieved_price)),
-                    monthly_costs_usd=float(req_data.get("monthlyCostsUSD", preset.default_monthly_costs)),
-                    statutory_royalty_rate=float(req_data.get("statutoryRoyaltyRate", preset.statutory_royalty_rate)),
-                    cost_recovery_cap=float(req_data.get("costRecoveryCap", preset.cost_recovery_cap)),
-                    gnpc_carried_interest_rate=float(req_data.get("gnpcCarriedInterestRate", preset.default_carried_interest)),
-                    gnpc_paying_interest_rate=float(req_data.get("gnpcPayingInterestRate", preset.default_paying_interest)),
-                )
-                output = calculate_fiscal_reconciliation(inp)
-                self._send_json(200, asdict(output))
-            except Exception as e:
-                self._send_json(400, {"error": str(e)})
-
-        elif parsed.path == "/api/sensitivity":
-            try:
-                preset_id = req_data.get("concessionId", "jubilee")
-                preset = CONCESSION_PRESETS.get(preset_id, CONCESSION_PRESETS["jubilee"])
-                inp = FiscalInputs(
-                    concession_id=preset_id,
-                    concession_name=req_data.get("concessionName", preset.name),
-                    gross_production_barrels=float(req_data.get("grossProductionBarrels", preset.default_gross_production)),
-                    achieved_price_usd=float(req_data.get("achievedPriceUSD", preset.default_achieved_price)),
-                    monthly_costs_usd=float(req_data.get("monthlyCostsUSD", preset.default_monthly_costs)),
-                    statutory_royalty_rate=float(req_data.get("statutoryRoyaltyRate", preset.statutory_royalty_rate)),
-                    cost_recovery_cap=float(req_data.get("costRecoveryCap", preset.cost_recovery_cap)),
-                    gnpc_carried_interest_rate=float(req_data.get("gnpcCarriedInterestRate", preset.default_carried_interest)),
-                    gnpc_paying_interest_rate=float(req_data.get("gnpcPayingInterestRate", preset.default_paying_interest)),
-                )
-                curve = calculate_price_sensitivity(inp, 50.0, 120.0, 5.0)
-                self._send_json(200, {"points": curve})
-            except Exception as e:
-                self._send_json(400, {"error": str(e)})
-        else:
-            self._send_json(404, {"error": "Endpoint not found"})
-
-
-def main():
-    parser = argparse.ArgumentParser(description="GNPC Fiscal & Entitlement Reconciliation Suite (Act 919)")
-    parser.add_argument("--test", action="store_true", help="Run automated fiscal calculation unit tests")
-    parser.add_argument("--field", choices=["jubilee", "ten", "sankofa", "custom"], default="jubilee", help="Concession field preset")
-    parser.add_argument("--gross", type=float, default=None, help="Gross Production Barrels (Q_gross)")
-    parser.add_argument("--price", type=float, default=None, help="Achieved Crude Lifting Price ($/bbl)")
-    parser.add_argument("--costs", type=float, default=None, help="Monthly Claimed OPEX + CAPEX ($ USD)")
-    parser.add_argument("--cargo", type=str, default="CARGO-2026/74", help="Lifting Parcel Reference")
-    parser.add_argument("--serve", nargs="?", const=8000, type=int, help="Start HTTP server on specified port (default 8000)")
-
-    args = parser.parse_args()
-
-    if args.test:
-        run_unit_tests()
-        return
-
-    if args.serve is not None:
-        port = args.serve
-        server_address = ("", port)
-        httpd = HTTPServer(server_address, GnpcFiscalHttpHandler)
-        print(f"GNPC Upstream Fiscal Engine HTTP Server listening on port {port}...")
-        print("Available REST endpoints:")
-        print("  GET  /api/presets")
-        print("  POST /api/calculate")
-        print("  POST /api/sensitivity")
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\nShutting down server.")
-            httpd.server_close()
-        return
-
-    # Default: Run CLI calculation and display report
-    preset = CONCESSION_PRESETS[args.field]
-    inp = FiscalInputs(
-        concession_id=preset.id,
-        concession_name=preset.name,
-        gross_production_barrels=args.gross if args.gross is not None else preset.default_gross_production,
-        achieved_price_usd=args.price if args.price is not None else preset.default_achieved_price,
-        monthly_costs_usd=args.costs if args.costs is not None else preset.default_monthly_costs,
-        statutory_royalty_rate=preset.statutory_royalty_rate,
-        cost_recovery_cap=preset.cost_recovery_cap,
-        gnpc_carried_interest_rate=preset.default_carried_interest,
-        gnpc_paying_interest_rate=preset.default_paying_interest,
-    )
-    result = calculate_fiscal_reconciliation(inp)
-    print_cli_audit_report(result, cargo_ref=args.cargo)
+def is_running_with_streamlit() -> bool:
+    """Detects if script was invoked via `streamlit run app.py` or deployed on Streamlit Cloud."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return "STREAMLIT_SERVER_PORT" in os.environ or "STREAMLIT_RUN" in os.environ
 
 
 if __name__ == "__main__":
-    main()
-  def main():
-    import streamlit as st
-    st.write("🚨 THE APP IS ALIVE!")
-    # ... the rest of your code ...
+    if is_running_with_streamlit():
+        render_streamlit_app()
+    else:
+        parser = argparse.ArgumentParser(description="GNPC Upstream Fiscal Reconciliation Suite (Act 919)")
+        parser.add_argument("--test", action="store_true", help="Run automated fiscal unit verification tests")
+        parser.add_argument("--field", choices=["jubilee", "ten", "sankofa", "custom"], default="jubilee", help="Concession field preset")
+        parser.add_argument("--gross", type=float, default=None, help="Gross Production Barrels (Q_gross)")
+        parser.add_argument("--price", type=float, default=None, help="Achieved Crude Lifting Price ($/bbl)")
+        parser.add_argument("--costs", type=float, default=None, help="Monthly Claimed OPEX + CAPEX ($ USD)")
+        parser.add_argument("--cargo", type=str, default="CARGO-2026/74", help="Lifting Parcel Reference")
+
+        args = parser.parse_args()
+
+        if args.test:
+            run_unit_tests()
+            sys.exit(0)
+
+        # If user has Streamlit installed and ran with no CLI arguments, launch the browser app!
+        has_cli_args = any(arg in sys.argv for arg in ["--field", "--gross", "--price", "--costs", "--cargo"])
+        if not has_cli_args:
+            try:
+                import streamlit
+                from streamlit.web import cli as stcli
+                print("[+] Streamlit detected. Launching interactive web application...")
+                sys.argv = ["streamlit", "run", os.path.abspath(__file__)]
+                sys.exit(stcli.main())
+            except ImportError:
+                pass
+
+        # Otherwise print the executive terminal report
+        preset = CONCESSION_PRESETS[args.field]
+        inp = FiscalInputs(
+            concession_id=preset.id,
+            concession_name=preset.name,
+            gross_production_barrels=args.gross if args.gross is not None else preset.default_gross_production,
+            achieved_price_usd=args.price if args.price is not None else preset.default_achieved_price,
+            monthly_costs_usd=args.costs if args.costs is not None else preset.default_monthly_costs,
+            statutory_royalty_rate=preset.statutory_royalty_rate,
+            cost_recovery_cap=preset.cost_recovery_cap,
+            gnpc_carried_interest_rate=preset.default_carried_interest,
+            gnpc_paying_interest_rate=preset.default_paying_interest,
+        )
+        res = calculate_fiscal_reconciliation(inp)
+        print_cli_audit_report(res, cargo_ref=args.cargo)
+        print("Tip: Install streamlit with 'pip install streamlit pandas' then run 'streamlit run app.py' for the visual dashboard!\n")
+else:
+    render_streamlit_app()
